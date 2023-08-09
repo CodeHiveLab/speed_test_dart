@@ -160,10 +160,11 @@ class SpeedTestDart {
     required List<Server> servers,
     int simultaneousUploads = 2,
     int retryCount = 3,
+    int minUploadSize = 200 * 1024,
   }) async {
     double uploadSpeed = 0;
     for (var s in servers) {
-      final testData = generateUploadData(retryCount);
+      final testData = generateUploadData(retryCount, minUploadSize);
       final semaphore = Semaphore(simultaneousUploads);
       final stopwatch = Stopwatch()..start();
       final tasks = <int>[];
@@ -193,12 +194,12 @@ class SpeedTestDart {
   }
 
   /// Generate list of [String] urls for upload.
-  List<String> generateUploadData(int retryCount) {
+  List<String> generateUploadData(int retryCount, [int minUploadSize = 200 * 1024]) {
     final random = Random();
     final result = <String>[];
 
     for (var sizeCounter = 1; sizeCounter < maxUploadSize + 1; sizeCounter++) {
-      final size = sizeCounter * 200 * 1024;
+      final size = sizeCounter * minUploadSize;
       final builder = StringBuffer()
         ..write('content ${sizeCounter.toString()}=');
 
