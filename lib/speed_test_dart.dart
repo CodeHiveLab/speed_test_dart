@@ -133,16 +133,39 @@ class SpeedTestDart {
       final stopwatch = Stopwatch()..start();
 
       try {
-        await Future.forEach(testData, (String td) async {
+        // await Future.forEach(testData, (String td) async {
+        //   await semaphore.acquire();
+        //   try {
+        //     final data = await http.get(Uri.parse(td));
+        //     tasks.add(data.bodyBytes.length);
+        //   } finally {
+        //     semaphore.release();
+        //   }
+        // });
+        // stopwatch.stop();
+        if (testData.length == 1) {
+          String td = testData.first;
+          final data = await http.get(Uri.parse(td));
+          tasks.add(data.bodyBytes.length);
+        } else {
+          await Future.forEach(testData, (String td) async {
+            await semaphore.acquire();
+            // do post request to measure time for upload
+            http.get(Uri.parse(td)).then((data) {
+              tasks.add(data.bodyBytes.length);
+              semaphore.release();
+            }). catchError((error) {
+              semaphore.release();
+            });
+          });
           await semaphore.acquire();
-          try {
-            final data = await http.get(Uri.parse(td));
-            tasks.add(data.bodyBytes.length);
-          } finally {
-            semaphore.release();
-          }
-        });
+          semaphore.release();
+        }
+
         stopwatch.stop();
+        if (tasks.isEmpty) {
+          throw Exception('No tasks were executed successfully');
+        }
         final _totalSize = tasks.reduce((a, b) => a + b);
         downloadSpeed = (_totalSize * 8 / 1024) /
             (stopwatch.elapsedMilliseconds / 1000) /
@@ -170,17 +193,29 @@ class SpeedTestDart {
       final tasks = <int>[];
 
       try {
-        await Future.forEach(testData, (String td) async {
-          await semaphore.acquire();
-          try {
+        if (testData.length == 1) {
+          String td = testData.first;
+          await http.post(Uri.parse(s.url), body: td);
+          tasks.add(td.length);
+        } else {
+          await Future.forEach(testData, (String td) async {
+            await semaphore.acquire();
             // do post request to measure time for upload
-            await http.post(Uri.parse(s.url), body: td);
-            tasks.add(td.length);
-          } finally {
-            semaphore.release();
-          }
-        });
+            http.post(Uri.parse(s.url), body: td).then((value) {
+              tasks.add(td.length);
+              semaphore.release();
+            }). catchError((error) {
+              semaphore.release();
+            });
+          });
+          await semaphore.acquire();
+          semaphore.release();
+        }
+
         stopwatch.stop();
+        if (tasks.isEmpty) {
+          throw Exception('No tasks were executed successfully');
+        }
         final _totalSize = tasks.reduce((a, b) => a + b);
         uploadSpeed = (_totalSize * 8 / 1024) /
             (stopwatch.elapsedMilliseconds / 1000) /
