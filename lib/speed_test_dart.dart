@@ -133,16 +133,9 @@ class SpeedTestDart {
       final stopwatch = Stopwatch()..start();
 
       try {
-        // await Future.forEach(testData, (String td) async {
-        //   await semaphore.acquire();
-        //   try {
-        //     final data = await http.get(Uri.parse(td));
-        //     tasks.add(data.bodyBytes.length);
-        //   } finally {
-        //     semaphore.release();
-        //   }
-        // });
-        // stopwatch.stop();
+        Completer completer = Completer();
+        int finishedCount = 0;
+
         if (testData.length == 1) {
           String td = testData.first;
           final data = await http.get(Uri.parse(td));
@@ -154,12 +147,19 @@ class SpeedTestDart {
             http.get(Uri.parse(td)).then((data) {
               tasks.add(data.bodyBytes.length);
               semaphore.release();
+              finishedCount++;
+              if (finishedCount == testData.length) {
+                completer.complete();
+              }
             }). catchError((error) {
               semaphore.release();
+              finishedCount++;
+              if (finishedCount == testData.length) {
+                completer.complete();
+              }
             });
           });
-          await semaphore.acquire();
-          semaphore.release();
+          await completer.future;
         }
 
         stopwatch.stop();
@@ -193,6 +193,9 @@ class SpeedTestDart {
       final tasks = <int>[];
 
       try {
+        Completer completer = Completer();
+        int finishedCount = 0;
+
         if (testData.length == 1) {
           String td = testData.first;
           await http.post(Uri.parse(s.url), body: td);
@@ -204,12 +207,19 @@ class SpeedTestDart {
             http.post(Uri.parse(s.url), body: td).then((value) {
               tasks.add(td.length);
               semaphore.release();
+              finishedCount++;
+              if (finishedCount == testData.length) {
+                completer.complete();
+              }
             }). catchError((error) {
               semaphore.release();
+              finishedCount++;
+              if (finishedCount == testData.length) {
+                completer.complete();
+              }
             });
           });
-          await semaphore.acquire();
-          semaphore.release();
+          await completer.future;
         }
 
         stopwatch.stop();
