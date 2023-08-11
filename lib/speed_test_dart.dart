@@ -1,6 +1,7 @@
 library speed_test_dart;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:http/http.dart' as http;
@@ -20,6 +21,16 @@ class SpeedTestDart {
     );
 
     var serversConfig = ServersList(<Server>[]);
+    for (final element in jsonServersUrls) {
+      if (serversConfig.servers.isNotEmpty) break;
+      try {
+        final resp = await http.get(Uri.parse(element));
+        // json string to map
+        serversConfig = ServersList.fromJSON(jsonDecode(resp.body));
+      } catch (ex) {
+        serversConfig = ServersList(<Server>[]);
+      }
+    }
     for (final element in serversUrls) {
       if (serversConfig.servers.isNotEmpty) break;
       try {

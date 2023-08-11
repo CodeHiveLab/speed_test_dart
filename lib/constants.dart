@@ -9,6 +9,10 @@ const serversUrls = [
   'https://c.speedtest.net/speedtest-servers.php'
 ];
 
+const jsonServersUrls = [
+  'https://www.speedtest.net/api/js/servers?engine=js&limit=10&https_functional=true',
+];
+
 const defaultDownloadSizes = [
   FileSize.SIZE_350,
   FileSize.SIZE_750,

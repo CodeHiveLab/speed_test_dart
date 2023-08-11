@@ -32,6 +32,22 @@ class Server {
           double.parse(element.getAttribute('lon')!),
         );
 
+  Server.fromMap(Map<String, dynamic> element)
+      : id = int.parse(element['id']!),
+        name = element['name']!,
+        country = element['country']!,
+        sponsor = element['sponsor']!,
+        host = element['host']!,
+        url = element['url']!,
+        latitude = double.parse(element['lat']!),
+        longitude = double.parse(element['lon']!),
+        distance = 99999999999,
+        latency = 99999999999,
+        geoCoordinate = Coordinate(
+          double.parse(element['lat']!),
+          double.parse(element['lon']!),
+        );
+
   int id;
   String name;
   String country;
@@ -59,6 +75,9 @@ class ServersList {
           final server = Server.fromXMLElement(element);
           return server;
         });
+
+  ServersList.fromJSON(List<dynamic> json)
+      : servers = json.map((e) => Server.fromMap(e as Map<String, dynamic>));
 
   Iterable<Server> servers;
 
